@@ -31,6 +31,11 @@ public class BraintreeConfigProperties {
 	
 	private static final String PROPERTY_PREFIX = "org.killbill.billing.plugin.braintree.";
 
+	public static final String BRAINTREE_ENVIRONMENT_KEY = "BRAINTREE_ENVIRONMENT";
+	public static final String BRAINTREE_MERCHANT_ID_KEY = "BRAINTREE_MERCHANT_ID";
+	public static final String BRAINTREE_PUBLIC_KEY = "BRAINTREE_PUBLIC_KEY";
+	public static final String BRAINTREE_PRIVATE_KEY = "BRAINTREE_PRIVATE_KEY";
+
 	public static final String DEFAULT_PENDING_PAYMENT_EXPIRATION_PERIOD = "P3d";
 	public static final String DEFAULT_PENDING_HPP_PAYMENT_WITHOUT_COMPLETION_EXPIRATION_PERIOD = "PT1h";
 
@@ -71,18 +76,30 @@ public class BraintreeConfigProperties {
 	}
 
 	public String getBtEnvironment() {
+		if (btEnvironment == null || btEnvironment.isEmpty()) {
+			return getClient(BRAINTREE_ENVIRONMENT_KEY, null);
+		}
 		return btEnvironment;
 	}
 
 	public String getBtMerchantId() {
+		if (btMerchantId == null || btMerchantId.isEmpty()) {
+			return getClient(BRAINTREE_MERCHANT_ID_KEY, null);
+		}
 		return btMerchantId;
 	}
 
 	public String getBtPublicKey() {
+		if (btPublicKey == null || btPublicKey.isEmpty()) {
+			return getClient(BRAINTREE_PUBLIC_KEY, null);
+		}
 		return btPublicKey;
 	}
 
 	public String getBtPrivateKey() {
+		if (btPrivateKey == null || btPrivateKey.isEmpty()) {
+			return getClient(BRAINTREE_PRIVATE_KEY, null);
+		}
 		return btPrivateKey;
 	}
 
@@ -156,5 +173,17 @@ public class BraintreeConfigProperties {
 				}
 			}
 		}
+	}
+
+	private String getClient(String envKey, String defaultValue) {
+		Map<String, String> env = System.getenv();
+
+		String value = env.get(envKey);
+
+		if (value == null || value.isEmpty()) {
+			return defaultValue;
+		}
+
+		return value;
 	}
 }
