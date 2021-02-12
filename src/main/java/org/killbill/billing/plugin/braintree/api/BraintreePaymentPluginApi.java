@@ -278,12 +278,14 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			throws PaymentPluginApiException {
 		String braintreeCustomerId = PluginProperties.getValue(BraintreePluginProperties.PROPERTY_BT_CUSTOMER_ID,
 				BraintreePluginProperties.PROPERTY_FALLBACK_VALUE, properties);
-		setCustomerIdCustomField(braintreeCustomerId, kbAccountId, context);
+		if(!braintreeCustomerId.equals(BraintreePluginProperties.PROPERTY_FALLBACK_VALUE)){
+			setCustomerIdCustomField(braintreeCustomerId, kbAccountId, context);
+		}
 		if(paymentMethodProps != null && paymentMethodProps.getExternalPaymentMethodId() != null && !paymentMethodProps.getExternalPaymentMethodId().equals(kbPaymentMethodId.toString())){
 			//Payment method was created in Braintree. Synchronize the payment method ID and create in KillBill only
 			try{
 				Result<? extends PaymentMethod> result = braintreeClient.updatePaymentMethod(paymentMethodProps.getExternalPaymentMethodId(),
-						kbPaymentMethodId.toString(), braintreeCustomerId);
+						kbPaymentMethodId.toString(), getCustomerIdCustomField(kbAccountId, context));
 				if(!result.isSuccess()) throw new BraintreeException(result.getMessage());
 			}
 			catch (BraintreeException e){
@@ -299,7 +301,8 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 					BraintreePluginProperties.PaymentMethodType.CARD.toString(), properties);
 			logger.info("Creating payment method with nonce={}, paymentMethodId={}, paymentMethodType={}", braintreeNonce, braintreePaymentMethodToken, braintreePaymentMethodType);
 			try{
-				Result<? extends PaymentMethod> result = braintreeClient.createPaymentMethod(braintreeCustomerId,
+				Result<? extends PaymentMethod> result = braintreeClient.createPaymentMethod(
+						getCustomerIdCustomField(kbAccountId, context),
 						braintreePaymentMethodToken,
 						braintreeNonce,
 						BraintreePluginProperties.PaymentMethodType.valueOf(braintreePaymentMethodType.toUpperCase()));
