@@ -17,6 +17,10 @@
 
 <FindBugsFilter>
     <Match>
-        <Class name="~org\.killbill\.billing\.plugin\.stripe\.dao\.gen.*"/>
+        <Class name="~org\.killbill\.billing\.plugin\.braintree\.dao\.gen.*"/>
+    </Match>
+    <Match>
+        <Class name="org.killbill.billing.plugin.braintree.api.BraintreePaymentTransactionInfoPlugin"/>
+        <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>
     </Match>
 </FindBugsFilter>
