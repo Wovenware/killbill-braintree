@@ -38,7 +38,6 @@ import org.killbill.billing.payment.api.TransactionType;
 import org.killbill.billing.plugin.api.PluginProperties;
 import org.killbill.billing.plugin.braintree.client.BraintreeClient;
 import org.killbill.billing.plugin.braintree.core.BraintreePluginProperties;
-import org.killbill.billing.plugin.braintree.dao.gen.tables.records.BraintreeHppRequestsRecord;
 import org.killbill.billing.plugin.dao.payment.PluginPaymentDao;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -47,8 +46,6 @@ import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.records.BraintreePaymentMethodsRecord;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.records.BraintreeResponsesRecord;
 
-
-import static org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeHppRequests.BRAINTREE_HPP_REQUESTS;
 import static org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS;
 import static org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses.BRAINTREE_RESPONSES;
 
@@ -118,56 +115,6 @@ public class BraintreeDao extends PluginPaymentDao<BraintreeResponsesRecord, Bra
                                 .and(BRAINTREE_PAYMENT_METHODS.KB_TENANT_ID.equal(kbTenantId.toString()))
                                 .execute();
                         return null;
-                    }
-                });
-    }
-
-    // HPP requests
-
-    public void addHppRequest(final UUID kbAccountId,
-                              final UUID kbPaymentId,
-                              final UUID kbPaymentTransactionId,
-                              final Map<String, String> additionalDataMap,
-                              final DateTime utcNow,
-                              final UUID kbTenantId) throws SQLException {
-
-        execute(dataSource.getConnection(),
-                new WithConnectionCallback<Void>() {
-                    @Override
-                    public Void withConnection(final Connection conn) throws SQLException {
-                        DSL.using(conn, dialect, settings)
-                                .insertInto(BRAINTREE_HPP_REQUESTS,
-                                        BRAINTREE_HPP_REQUESTS.KB_ACCOUNT_ID,
-                                        BRAINTREE_HPP_REQUESTS.KB_PAYMENT_ID,
-                                        BRAINTREE_HPP_REQUESTS.KB_PAYMENT_TRANSACTION_ID,
-                                        BRAINTREE_HPP_REQUESTS.ADDITIONAL_DATA,
-                                        BRAINTREE_HPP_REQUESTS.CREATED_DATE,
-                                        BRAINTREE_HPP_REQUESTS.KB_TENANT_ID)
-                                .values(kbAccountId.toString(),
-                                        kbPaymentId == null ? null : kbPaymentId.toString(),
-                                        kbPaymentTransactionId == null ? null : kbPaymentTransactionId.toString(),
-                                        asString(additionalDataMap),
-                                        toLocalDateTime(utcNow),
-                                        kbTenantId.toString())
-                                .execute();
-                        return null;
-                    }
-                });
-    }
-
-    public BraintreeHppRequestsRecord getHppRequest(final String kbTransactionId,
-                                                    final String kbTenantId) throws SQLException {
-        return execute(dataSource.getConnection(),
-                new WithConnectionCallback<BraintreeHppRequestsRecord>() {
-                    @Override
-                    public BraintreeHppRequestsRecord withConnection(final Connection conn) throws SQLException {
-                        return DSL.using(conn, dialect, settings)
-                                .selectFrom(BRAINTREE_HPP_REQUESTS)
-                                .where(BRAINTREE_HPP_REQUESTS.KB_PAYMENT_TRANSACTION_ID.equal(kbTransactionId))
-                                .and(BRAINTREE_HPP_REQUESTS.KB_TENANT_ID.equal(kbTenantId))
-                                .orderBy(BRAINTREE_HPP_REQUESTS.RECORD_ID.desc())
-                                .limit(1)
-                                .fetchOne();
                     }
                 });
     }

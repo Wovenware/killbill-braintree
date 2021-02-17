@@ -37,7 +37,6 @@ public class BraintreeConfigProperties {
 	public static final String BRAINTREE_PRIVATE_KEY = "BRAINTREE_PRIVATE_KEY";
 
 	public static final String DEFAULT_PENDING_PAYMENT_EXPIRATION_PERIOD = "P3d";
-	public static final String DEFAULT_PENDING_HPP_PAYMENT_WITHOUT_COMPLETION_EXPIRATION_PERIOD = "PT1h";
 
 	private static final String ENTRY_DELIMITER = "|";
 	private static final String KEY_VALUE_DELIMITER = "#";
@@ -52,7 +51,6 @@ public class BraintreeConfigProperties {
 	private final String connectionTimeout;
 	private final String readTimeout;
 	private final Period pendingPaymentExpirationPeriod;
-	private final Period pendingHppPaymentWithoutCompletionExpirationPeriod;
 	private final Map<String, Period> paymentMethodToExpirationPeriod = new LinkedHashMap<String, Period>();
 	private final String chargeDescription;
 	private final String chargeStatementDescriptor;
@@ -66,7 +64,6 @@ public class BraintreeConfigProperties {
 		this.connectionTimeout = properties.getProperty(PROPERTY_PREFIX + "connectionTimeout", DEFAULT_CONNECTION_TIMEOUT);
 		this.readTimeout = properties.getProperty(PROPERTY_PREFIX + "readTimeout", DEFAULT_READ_TIMEOUT);
 		this.pendingPaymentExpirationPeriod = readPendingExpirationProperty(properties);
-		this.pendingHppPaymentWithoutCompletionExpirationPeriod = readPendingHppPaymentWithoutCompletionExpirationPeriod(properties);
 		this.chargeDescription = Ascii.truncate(MoreObjects.firstNonNull(properties.getProperty(PROPERTY_PREFIX + "chargeDescription"), "Kill Bill charge"), 22, "...");
 		this.chargeStatementDescriptor = Ascii.truncate(MoreObjects.firstNonNull(properties.getProperty(PROPERTY_PREFIX + "chargeStatementDescriptor"), "Kill Bill charge"), 22, "...");
 	}
@@ -127,10 +124,6 @@ public class BraintreeConfigProperties {
 		}
 	}
 
-	public Period getPendingHppPaymentWithoutCompletionExpirationPeriod() {
-		return pendingHppPaymentWithoutCompletionExpirationPeriod;
-	}
-
 	private Period readPendingExpirationProperty(final Properties properties) {
 		final String pendingExpirationPeriods = properties.getProperty(PROPERTY_PREFIX + "pendingPaymentExpirationPeriod");
 		final Map<String, String> paymentMethodToExpirationPeriodString = new HashMap<String, String>();
@@ -150,17 +143,6 @@ public class BraintreeConfigProperties {
 		}
 
 		return Period.parse(DEFAULT_PENDING_PAYMENT_EXPIRATION_PERIOD);
-	}
-
-	private Period readPendingHppPaymentWithoutCompletionExpirationPeriod(final Properties properties) {
-		final String value = properties.getProperty(PROPERTY_PREFIX + "pendingHppPaymentWithoutCompletionExpirationPeriod");
-		if (value != null) {
-			try {
-				return Period.parse(value);
-			} catch (final IllegalArgumentException e) { /* Ignore */ }
-		}
-
-		return Period.parse(DEFAULT_PENDING_HPP_PAYMENT_WITHOUT_COMPLETION_EXPIRATION_PERIOD);
 	}
 
 	private synchronized void refillMap(final Map<String, String> map, final String stringToSplit) {

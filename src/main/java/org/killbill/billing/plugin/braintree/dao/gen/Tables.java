@@ -17,7 +17,6 @@
 package org.killbill.billing.plugin.braintree.dao.gen;
 
 
-import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeHppRequests;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreePaymentMethods;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
 
@@ -27,11 +26,6 @@ import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
-
-    /**
-     * The table <code>killbill.braintree_hpp_requests</code>.
-     */
-    public static final BraintreeHppRequests BRAINTREE_HPP_REQUESTS = BraintreeHppRequests.BRAINTREE_HPP_REQUESTS;
 
     /**
      * The table <code>killbill.braintree_payment_methods</code>.
