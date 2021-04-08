@@ -16,7 +16,6 @@
 
 package org.killbill.billing.plugin.braintree.core.resources;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
 import org.killbill.billing.payment.api.TransactionType;
@@ -83,24 +82,8 @@ public class ExpiredPaymentPolicy {
 
         final Map braintreeResponseAdditionalData = BraintreeDao.mapFromAdditionalDataString(transaction.getBraintreeResponsesRecord().getAdditionalData());
 
-        if (isHppBuildFormTransaction(braintreeResponseAdditionalData)) {
-            return transaction.getCreatedDate().plus(braintreeProperties.getPendingHppPaymentWithoutCompletionExpirationPeriod());
-        }
-
         final String paymentMethod = getPaymentMethod(braintreeResponseAdditionalData);
         return transaction.getCreatedDate().plus(braintreeProperties.getPendingPaymentExpirationPeriod(paymentMethod));
-    }
-
-    private boolean isHppBuildFormTransaction(final Map braintreeResponseAdditionalData) {
-        return isHppPayment(braintreeResponseAdditionalData) && !isHppCompletionTransaction(braintreeResponseAdditionalData);
-    }
-
-    private boolean isHppCompletionTransaction(final Map braintreeResponseAdditionalData) {
-        return Boolean.valueOf(MoreObjects.firstNonNull(braintreeResponseAdditionalData.get(BraintreePluginProperties.PROPERTY_HPP_COMPLETION), false).toString());
-    }
-
-    private boolean isHppPayment(final Map braintreeResponseAdditionalData) {
-        return Boolean.valueOf(MoreObjects.firstNonNull(braintreeResponseAdditionalData.get(BraintreePluginProperties.PROPERTY_FROM_HPP), false).toString());
     }
 
     private String getPaymentMethod(final Map braintreeResponseAdditionalData) {

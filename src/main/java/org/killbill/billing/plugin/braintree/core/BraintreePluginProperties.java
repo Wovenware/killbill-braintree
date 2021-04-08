@@ -53,8 +53,6 @@ public abstract class BraintreePluginProperties {
     public static final String PROPERTY_KB_PAYMENT_ID = "kb_payment_id";
     public static final String PROPERTY_KB_TRANSACTION_TYPE = "kb_transaction_type";
 
-    public static final String PROPERTY_FROM_HPP = "fromHPP";
-    public static final String PROPERTY_HPP_COMPLETION = "fromHPPCompletion";
     public static final String PROPERTY_OVERRIDDEN_TRANSACTION_STATUS = "overriddenTransactionStatus";
 
     public static Map<String, Object> toAdditionalDataMap(final Result<Transaction> braintreeResult) {

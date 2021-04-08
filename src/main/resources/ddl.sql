@@ -17,19 +17,6 @@
 
 /*! SET default_storage_engine=INNODB */;
 
-create table braintree_hpp_requests (
-  record_id serial
-, kb_account_id char(36) not null
-, kb_payment_id char(36) default null
-, kb_payment_transaction_id char(36) default null
-, additional_data longtext default null
-, created_date datetime not null
-, kb_tenant_id char(36) not null
-, primary key(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-create index braintree_hpp_requests_kb_account_id on braintree_hpp_requests(kb_account_id);
-create index braintree_hpp_requests_kb_payment_transaction_id on braintree_hpp_requests(kb_payment_transaction_id);
-
 create table braintree_responses (
   record_id serial
 , kb_account_id char(36) not null

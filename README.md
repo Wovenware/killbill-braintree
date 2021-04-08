@@ -37,6 +37,17 @@ org.killbill.billing.plugin.braintree.btPrivateKey={privateKey}
 
 For the btEnvironment property, use 'sandbox' only for testing with a Braintree Sandbox account. Other possible values include 'development', 'qa', and 'production'. See Braintree documentation for details.
 
+Note that these four properties can also be set using the following environment variables:
+
+```bash
+BRAINTREE_ENVIRONMENT
+BRAINTREE_MERCHANT_ID
+BRAINTREE_PUBLIC_KEY
+BRAINTREE_PRIVATE_KEY
+```
+
+Since unit tests run isolated from the KillBill environment, they can only execute properly if the credentials are set using environment variables. The Braintree plugin on the other hand will attempt to load the credentials from the properties file first, and fallback to the environment variables as a second option only if the properties are not found in the file.
+
 4. In order to facilitate automated testing, you should disable all fraud detection within your Braintree Sandbox account. These can generate gateway rejection errors when processing multiple test transactions. In particular make sure to disable [Duplicate Transaction Checking](https://articles.braintreepayments.com/control-panel/transactions/duplicate-checking#configuring-duplicate-transaction-checking).
 
 Once these properties are configured and the plugin restarted it will be ready to be used.

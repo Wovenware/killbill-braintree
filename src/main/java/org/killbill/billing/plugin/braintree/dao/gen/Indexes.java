@@ -20,7 +20,6 @@ package org.killbill.billing.plugin.braintree.dao.gen;
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
-import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeHppRequests;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreePaymentMethods;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
 
@@ -35,8 +34,6 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index BRAINTREE_HPP_REQUESTS_BRAINTREE_HPP_REQUESTS_KB_ACCOUNT_ID = Indexes0.BRAINTREE_HPP_REQUESTS_BRAINTREE_HPP_REQUESTS_KB_ACCOUNT_ID;
-    public static final Index BRAINTREE_HPP_REQUESTS_BRAINTREE_HPP_REQUESTS_KB_PAYMENT_TRANSACTION_ID = Indexes0.BRAINTREE_HPP_REQUESTS_BRAINTREE_HPP_REQUESTS_KB_PAYMENT_TRANSACTION_ID;
     public static final Index BRAINTREE_PAYMENT_METHODS_BRAINTREE_PAYMENT_METHODS_BRAINTREE_ID = Indexes0.BRAINTREE_PAYMENT_METHODS_BRAINTREE_PAYMENT_METHODS_BRAINTREE_ID;
     public static final Index BRAINTREE_RESPONSES_BRAINTREE_RESPONSES_BRAINTREE_ID = Indexes0.BRAINTREE_RESPONSES_BRAINTREE_RESPONSES_BRAINTREE_ID;
     public static final Index BRAINTREE_RESPONSES_BRAINTREE_RESPONSES_KB_PAYMENT_ID = Indexes0.BRAINTREE_RESPONSES_BRAINTREE_RESPONSES_KB_PAYMENT_ID;
@@ -47,8 +44,6 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index BRAINTREE_HPP_REQUESTS_BRAINTREE_HPP_REQUESTS_KB_ACCOUNT_ID = Internal.createIndex("braintree_hpp_requests_kb_account_id", BraintreeHppRequests.BRAINTREE_HPP_REQUESTS, new OrderField[] { BraintreeHppRequests.BRAINTREE_HPP_REQUESTS.KB_ACCOUNT_ID }, false);
-        public static Index BRAINTREE_HPP_REQUESTS_BRAINTREE_HPP_REQUESTS_KB_PAYMENT_TRANSACTION_ID = Internal.createIndex("braintree_hpp_requests_kb_payment_transaction_id", BraintreeHppRequests.BRAINTREE_HPP_REQUESTS, new OrderField[] { BraintreeHppRequests.BRAINTREE_HPP_REQUESTS.KB_PAYMENT_TRANSACTION_ID }, false);
         public static Index BRAINTREE_PAYMENT_METHODS_BRAINTREE_PAYMENT_METHODS_BRAINTREE_ID = Internal.createIndex("braintree_payment_methods_braintree_id", BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS, new OrderField[] { BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS.BRAINTREE_ID }, false);
         public static Index BRAINTREE_RESPONSES_BRAINTREE_RESPONSES_BRAINTREE_ID = Internal.createIndex("braintree_responses_braintree_id", BraintreeResponses.BRAINTREE_RESPONSES, new OrderField[] { BraintreeResponses.BRAINTREE_RESPONSES.BRAINTREE_ID }, false);
         public static Index BRAINTREE_RESPONSES_BRAINTREE_RESPONSES_KB_PAYMENT_ID = Internal.createIndex("braintree_responses_kb_payment_id", BraintreeResponses.BRAINTREE_RESPONSES, new OrderField[] { BraintreeResponses.BRAINTREE_RESPONSES.KB_PAYMENT_ID }, false);

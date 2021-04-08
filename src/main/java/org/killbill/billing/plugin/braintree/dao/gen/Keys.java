@@ -22,10 +22,8 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
 import org.jooq.types.ULong;
-import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeHppRequests;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreePaymentMethods;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
-import org.killbill.billing.plugin.braintree.dao.gen.tables.records.BraintreeHppRequestsRecord;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.records.BraintreePaymentMethodsRecord;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.records.BraintreeResponsesRecord;
 
@@ -41,7 +39,6 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
-    public static final Identity<BraintreeHppRequestsRecord, ULong> IDENTITY_BRAINTREE_HPP_REQUESTS = Identities0.IDENTITY_BRAINTREE_HPP_REQUESTS;
     public static final Identity<BraintreePaymentMethodsRecord, ULong> IDENTITY_BRAINTREE_PAYMENT_METHODS = Identities0.IDENTITY_BRAINTREE_PAYMENT_METHODS;
     public static final Identity<BraintreeResponsesRecord, ULong> IDENTITY_BRAINTREE_RESPONSES = Identities0.IDENTITY_BRAINTREE_RESPONSES;
 
@@ -49,8 +46,6 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<BraintreeHppRequestsRecord> KEY_BRAINTREE_HPP_REQUESTS_PRIMARY = UniqueKeys0.KEY_BRAINTREE_HPP_REQUESTS_PRIMARY;
-    public static final UniqueKey<BraintreeHppRequestsRecord> KEY_BRAINTREE_HPP_REQUESTS_RECORD_ID = UniqueKeys0.KEY_BRAINTREE_HPP_REQUESTS_RECORD_ID;
     public static final UniqueKey<BraintreePaymentMethodsRecord> KEY_BRAINTREE_PAYMENT_METHODS_PRIMARY = UniqueKeys0.KEY_BRAINTREE_PAYMENT_METHODS_PRIMARY;
     public static final UniqueKey<BraintreePaymentMethodsRecord> KEY_BRAINTREE_PAYMENT_METHODS_RECORD_ID = UniqueKeys0.KEY_BRAINTREE_PAYMENT_METHODS_RECORD_ID;
     public static final UniqueKey<BraintreePaymentMethodsRecord> KEY_BRAINTREE_PAYMENT_METHODS_BRAINTREE_PAYMENT_METHODS_KB_PAYMENT_ID = UniqueKeys0.KEY_BRAINTREE_PAYMENT_METHODS_BRAINTREE_PAYMENT_METHODS_KB_PAYMENT_ID;
@@ -67,14 +62,11 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     private static class Identities0 {
-        public static Identity<BraintreeHppRequestsRecord, ULong> IDENTITY_BRAINTREE_HPP_REQUESTS = Internal.createIdentity(BraintreeHppRequests.BRAINTREE_HPP_REQUESTS, BraintreeHppRequests.BRAINTREE_HPP_REQUESTS.RECORD_ID);
         public static Identity<BraintreePaymentMethodsRecord, ULong> IDENTITY_BRAINTREE_PAYMENT_METHODS = Internal.createIdentity(BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS, BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS.RECORD_ID);
         public static Identity<BraintreeResponsesRecord, ULong> IDENTITY_BRAINTREE_RESPONSES = Internal.createIdentity(BraintreeResponses.BRAINTREE_RESPONSES, BraintreeResponses.BRAINTREE_RESPONSES.RECORD_ID);
     }
 
     private static class UniqueKeys0 {
-        public static final UniqueKey<BraintreeHppRequestsRecord> KEY_BRAINTREE_HPP_REQUESTS_PRIMARY = Internal.createUniqueKey(BraintreeHppRequests.BRAINTREE_HPP_REQUESTS, "KEY_braintree_hpp_requests_PRIMARY", new TableField[] { BraintreeHppRequests.BRAINTREE_HPP_REQUESTS.RECORD_ID }, true);
-        public static final UniqueKey<BraintreeHppRequestsRecord> KEY_BRAINTREE_HPP_REQUESTS_RECORD_ID = Internal.createUniqueKey(BraintreeHppRequests.BRAINTREE_HPP_REQUESTS, "KEY_braintree_hpp_requests_record_id", new TableField[] { BraintreeHppRequests.BRAINTREE_HPP_REQUESTS.RECORD_ID }, true);
         public static final UniqueKey<BraintreePaymentMethodsRecord> KEY_BRAINTREE_PAYMENT_METHODS_PRIMARY = Internal.createUniqueKey(BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS, "KEY_braintree_payment_methods_PRIMARY", new TableField[] { BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS.RECORD_ID }, true);
         public static final UniqueKey<BraintreePaymentMethodsRecord> KEY_BRAINTREE_PAYMENT_METHODS_RECORD_ID = Internal.createUniqueKey(BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS, "KEY_braintree_payment_methods_record_id", new TableField[] { BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS.RECORD_ID }, true);
         public static final UniqueKey<BraintreePaymentMethodsRecord> KEY_BRAINTREE_PAYMENT_METHODS_BRAINTREE_PAYMENT_METHODS_KB_PAYMENT_ID = Internal.createUniqueKey(BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS, "KEY_braintree_payment_methods_braintree_payment_methods_kb_payment_id", new TableField[] { BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS.KB_PAYMENT_METHOD_ID }, true);

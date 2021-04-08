@@ -85,6 +85,7 @@ public class TestBase {
         TestUtils.buildPaymentMethod(account.getId(), account.getPaymentMethodId(), BraintreeActivator.PLUGIN_NAME, killbillApi);
 
         braintreeConfigPropertiesConfigurationHandler = new BraintreeConfigPropertiesConfigurationHandler("", BraintreeActivator.PLUGIN_NAME, killbillApi);
+        setDefaultConfigurable();
         final BraintreeConfigProperties globalConfiguration = braintreeConfigPropertiesConfigurationHandler.getConfigurable(randomTenantId);
         final OSGIConfigPropertiesService configPropertiesService = Mockito.mock(OSGIConfigPropertiesService.class);
         braintreeGateway = new BraintreeGateway(
@@ -138,9 +139,7 @@ public class TestBase {
 
     @BeforeMethod(groups = "integration")
     public void setUpIntegration() throws Exception {
-        final Properties properties = TestUtils.loadProperties(PROPERTIES_FILE_NAME);
-        final BraintreeConfigProperties braintreeConfigProperties = new BraintreeConfigProperties(properties, "");
-        braintreeConfigPropertiesConfigurationHandler.setDefaultConfigurable(braintreeConfigProperties);
+        setDefaultConfigurable();
     }
 
     @BeforeSuite(groups = {"slow", "integration"})
@@ -151,6 +150,12 @@ public class TestBase {
     @AfterSuite(groups = {"slow", "integration"})
     public void tearDownAfterSuite() throws Exception {
         EmbeddedDbHelper.instance().stopDB();
+    }
+
+    private void setDefaultConfigurable() throws  Exception{
+        final Properties properties = TestUtils.loadProperties(PROPERTIES_FILE_NAME);
+        final BraintreeConfigProperties braintreeConfigProperties = new BraintreeConfigProperties(properties, "");
+        braintreeConfigPropertiesConfigurationHandler.setDefaultConfigurable(braintreeConfigProperties);
     }
 
 }

@@ -23,7 +23,6 @@ import java.util.List;
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
-import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeHppRequests;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreePaymentMethods;
 import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
 
@@ -34,17 +33,12 @@ import org.killbill.billing.plugin.braintree.dao.gen.tables.BraintreeResponses;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Killbill extends SchemaImpl {
 
-    private static final long serialVersionUID = 1531538102;
+    private static final long serialVersionUID = 713940866;
 
     /**
      * The reference instance of <code>killbill</code>
      */
     public static final Killbill KILLBILL = new Killbill();
-
-    /**
-     * The table <code>killbill.braintree_hpp_requests</code>.
-     */
-    public final BraintreeHppRequests BRAINTREE_HPP_REQUESTS = BraintreeHppRequests.BRAINTREE_HPP_REQUESTS;
 
     /**
      * The table <code>killbill.braintree_payment_methods</code>.
@@ -72,7 +66,6 @@ public class Killbill extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.<Table<?>>asList(
-            BraintreeHppRequests.BRAINTREE_HPP_REQUESTS,
             BraintreePaymentMethods.BRAINTREE_PAYMENT_METHODS,
             BraintreeResponses.BRAINTREE_RESPONSES);
     }

@@ -40,7 +40,6 @@ import org.killbill.billing.payment.api.TransactionType;
 import org.killbill.billing.payment.plugin.api.*;
 import org.killbill.billing.plugin.api.PluginProperties;
 import org.killbill.billing.plugin.api.core.PluginCustomField;
-import org.killbill.billing.plugin.api.payment.PluginHostedPaymentPageFormDescriptor;
 import org.killbill.billing.plugin.api.payment.PluginPaymentPluginApi;
 import org.killbill.billing.plugin.braintree.client.BraintreeClient;
 import org.killbill.billing.plugin.braintree.core.BraintreeActivator;
@@ -85,25 +84,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 	public PaymentTransactionInfoPlugin authorizePayment(UUID kbAccountId, UUID kbPaymentId, UUID kbTransactionId,
 			UUID kbPaymentMethodId, BigDecimal amount, Currency currency, Iterable<PluginProperty> properties,
 			CallContext context) throws PaymentPluginApiException {
-		final BraintreeResponsesRecord braintreeResponsesRecord;
-		try {
-			braintreeResponsesRecord = dao.getSuccessfulAuthorizationResponse(kbPaymentId, context.getTenantId());
-		} catch (final SQLException e) {
-			throw new PaymentPluginApiException("SQL exception when fetching response", e);
-		}
-
-		final boolean isHPPCompletion = braintreeResponsesRecord != null
-				&& Boolean.valueOf(MoreObjects.firstNonNull(BraintreeDao.mapFromAdditionalDataString(braintreeResponsesRecord.getAdditionalData()).get(BraintreePluginProperties.PROPERTY_FROM_HPP), false).toString());
-		if (!isHPPCompletion) {
-			updateResponseWithAdditionalProperties(kbTransactionId, properties, context.getTenantId());
-			//We don't have any record for that payment: we want to trigger an actual authorization call
-			return executeInitialTransaction(TransactionType.AUTHORIZE, kbAccountId, kbPaymentId, kbTransactionId, kbPaymentMethodId, amount, currency, properties, context);
-		} else {
-			// We already have a record for that payment transaction: we just update the response row with additional properties
-			// (the API can be called for instance after the user is redirected back from the HPP)
-			updateResponseWithAdditionalProperties(kbTransactionId, PluginProperties.merge(ImmutableMap.of(BraintreePluginProperties.PROPERTY_HPP_COMPLETION, true), properties), context.getTenantId());
-			return buildPaymentTransactionInfoPlugin(braintreeResponsesRecord);
-		}
+		return executeInitialTransaction(TransactionType.AUTHORIZE, kbAccountId, kbPaymentId, kbTransactionId, kbPaymentMethodId, amount, currency, properties, context);
 	}
 
 	@Override
@@ -135,7 +116,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 		try {
 			braintreeResponsesRecord = dao.updateResponse(kbTransactionId, properties, context.getTenantId());
 		} catch (final SQLException e) {
-			throw new PaymentPluginApiException("HPP notification came through, but we encountered a database error", e);
+			throw new PaymentPluginApiException("Encountered a database error while attempting to complete purchase.", e);
 		}
 
 		if (braintreeResponsesRecord == null) {
@@ -144,7 +125,6 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 		}
 		else {
 			// We already have a record for that payment transaction and we just updated the response row with additional properties
-			// (the API can be called for instance after the user is redirected back from the HPP)
 			return buildPaymentTransactionInfoPlugin(braintreeResponsesRecord);
 		}
 	}
@@ -174,12 +154,12 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 	public PaymentTransactionInfoPlugin creditPayment(UUID kbAccountId, UUID kbPaymentId, UUID kbTransactionId,
 			UUID kbPaymentMethodId, BigDecimal amount, Currency currency, Iterable<PluginProperty> properties,
 			CallContext context) throws PaymentPluginApiException {
-		//NOTE: Credit transactions are disabled in Braintree and require special authorization. Use of refunds is encouraged whenever possible
+		//NOTE: Credit transactions are disabled by default in Braintree and require special authorization. Use of refunds is encouraged whenever possible
 		final BraintreeResponsesRecord braintreeResponsesRecord;
 		try {
 			braintreeResponsesRecord = dao.updateResponse(kbTransactionId, properties, context.getTenantId());
 		} catch (final SQLException e) {
-			throw new PaymentPluginApiException("HPP notification came through, but we encountered a database error", e);
+			throw new PaymentPluginApiException("Encountered a database error while attempting to credit payment.", e);
 		}
 
 		if (braintreeResponsesRecord == null) {
@@ -220,7 +200,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			return transactions;
 		}
 
-		// Check if a HPP payment needs to be canceled
+		// Check if a payment needs to be canceled
 		final ExpiredPaymentPolicy expiredPaymentPolicy = new ExpiredPaymentPolicy(clock, braintreeConfigPropertiesConfigurationHandler.getConfigurable(context.getTenantId()));
 		final BraintreePaymentTransactionInfoPlugin transactionToExpire = expiredPaymentPolicy.isExpired(transactions);
 		if (transactionToExpire != null) {
@@ -278,12 +258,14 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			throws PaymentPluginApiException {
 		String braintreeCustomerId = PluginProperties.getValue(BraintreePluginProperties.PROPERTY_BT_CUSTOMER_ID,
 				BraintreePluginProperties.PROPERTY_FALLBACK_VALUE, properties);
-		setCustomerIdCustomField(braintreeCustomerId, kbAccountId, context);
+		if(!braintreeCustomerId.equals(BraintreePluginProperties.PROPERTY_FALLBACK_VALUE)){
+			setCustomerIdCustomField(braintreeCustomerId, kbAccountId, context);
+		}
 		if(paymentMethodProps != null && paymentMethodProps.getExternalPaymentMethodId() != null && !paymentMethodProps.getExternalPaymentMethodId().equals(kbPaymentMethodId.toString())){
 			//Payment method was created in Braintree. Synchronize the payment method ID and create in KillBill only
 			try{
 				Result<? extends PaymentMethod> result = braintreeClient.updatePaymentMethod(paymentMethodProps.getExternalPaymentMethodId(),
-						kbPaymentMethodId.toString(), braintreeCustomerId);
+						kbPaymentMethodId.toString(), getCustomerIdCustomField(kbAccountId, context));
 				if(!result.isSuccess()) throw new BraintreeException(result.getMessage());
 			}
 			catch (BraintreeException e){
@@ -299,7 +281,8 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 					BraintreePluginProperties.PaymentMethodType.CARD.toString(), properties);
 			logger.info("Creating payment method with nonce={}, paymentMethodId={}, paymentMethodType={}", braintreeNonce, braintreePaymentMethodToken, braintreePaymentMethodType);
 			try{
-				Result<? extends PaymentMethod> result = braintreeClient.createPaymentMethod(braintreeCustomerId,
+				Result<? extends PaymentMethod> result = braintreeClient.createPaymentMethod(
+						getCustomerIdCustomField(kbAccountId, context),
 						braintreePaymentMethodToken,
 						braintreeNonce,
 						BraintreePluginProperties.PaymentMethodType.valueOf(braintreePaymentMethodType.toUpperCase()));
@@ -403,23 +386,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 	@Override
 	public HostedPaymentPageFormDescriptor buildFormDescriptor(UUID kbAccountId, Iterable<PluginProperty> customFields,
 			Iterable<PluginProperty> properties, CallContext context) throws PaymentPluginApiException {
-
-		UUID kbPaymentId = UUID.fromString(PluginProperties.getValue(BraintreePluginProperties.PROPERTY_KB_PAYMENT_ID, BraintreePluginProperties.PROPERTY_FALLBACK_VALUE, properties));
-		UUID kbPaymentTransactionId = UUID.fromString(PluginProperties.getValue(BraintreePluginProperties.PROPERTY_KB_TRANSACTION_ID, BraintreePluginProperties.PROPERTY_FALLBACK_VALUE, properties));
-
-		Map<String, String> customFieldsMap = PluginProperties.toStringMap(customFields);
-
-		try {
-			dao.addHppRequest(kbAccountId,
-					kbPaymentId,
-					kbPaymentTransactionId,
-					customFieldsMap,
-					clock.getUTCNow(),
-					context.getTenantId());
-			return new PluginHostedPaymentPageFormDescriptor(kbAccountId, null, PluginProperties.buildPluginProperties(customFieldsMap));
-		} catch (final SQLException e) {
-			throw new PaymentPluginApiException("Unable to save HPP request", e);
-		}
+		throw new PaymentPluginApiException("INTERNAL", "#buildFormDescriptor is not implemented nor applicable to Braintree plugin.");
 	}
 
 	@Override
@@ -528,20 +495,6 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 		final Account account = getAccount(kbAccountId, context);
 		final BraintreePaymentMethodsRecord nonNullPaymentMethodsRecord = getBraintreePaymentMethodsRecord(kbPaymentMethodId, context);
 		final DateTime utcNow = clock.getUTCNow();
-
-		//Add HPP request
-		Iterable<PluginProperty> customFields = PluginProperties.merge(properties,
-				ImmutableList.of(new PluginProperty(BraintreePluginProperties.PROPERTY_AMOUNT, Double.toString(amount.doubleValue()), false),
-						new PluginProperty(BraintreePluginProperties.PROPERTY_CURRENCY, currency.toString(), false),
-						new PluginProperty(BraintreePluginProperties.PROPERTY_KB_TRANSACTION_TYPE, transactionType.name(), false)
-						));
-		Iterable<PluginProperty> pluginProperties = ImmutableList.of(
-				new PluginProperty(BraintreePluginProperties.PROPERTY_KB_PAYMENT_ID, kbPaymentId.toString(), false),
-				new PluginProperty(BraintreePluginProperties.PROPERTY_KB_TRANSACTION_ID, kbTransactionId.toString(), false));
-		buildFormDescriptor(kbAccountId,
-				customFields,
-				pluginProperties,
-				(CallContext) context);
 
 		Result<Transaction> response;
 		try {
