@@ -71,3 +71,38 @@ Note that when creating payment methods from the client at least the following p
 * bt_nonce: Payment method nonce received from Braintree.
 * bt_customer_id: The customer ID assigned to the customer in Braintree's vault. Only required if not already present as an account Custom Field, if provided it will be set as Custom Field.
 * payment_method_type: The type of payment method that is being created. Possible values include CARD, PAYPAL or ACH. These values are case insensitive. Not to be confused with Braintree's payment instrument type, which includes subdivisions of these three general types.
+
+### Payment methods sync
+
+If you are already storing payment methods in Braintree (or if you want to migrate from another billing system and already have customers in Braintree), the flow to set up Kill Bill accounts is as follows:
+
+1. Create a Kill Bill account
+2. Attach the custom field `BRAINTREE_CUSTOMER_ID` to the Kill Bill account. The custom field value should be the Braintree customer id
+```bash
+curl -v \
+     -X POST \
+     -u admin:password \
+     -H "X-Killbill-ApiKey: bob" \
+     -H "X-Killbill-ApiSecret: lazar" \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json" \
+     -H "X-Killbill-CreatedBy: demo" \
+     -H "X-Killbill-Reason: demo" \
+     -H "X-Killbill-Comment: demo" \
+     -d "[ { \"objectType\": \"ACCOUNT\", \"name\": \"BRAINTREE_CUSTOMER_ID\", \"value\": \"XXXXX\" }]" \
+     "http://127.0.0.1:8080/1.0/kb/accounts/<ACCOUNT_ID>/customFields"
+```
+3. Sync the payment methods from Braintree to Kill Bill:
+```bash
+curl -v \
+     -X PUT \
+     -u admin:password \
+     -H "X-Killbill-ApiKey: bob" \
+     -H "X-Killbill-ApiSecret: lazar" \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json" \
+     -H "X-Killbill-CreatedBy: demo" \
+     -H "X-Killbill-Reason: demo" \
+     -H "X-Killbill-Comment: demo" \
+     "http://127.0.0.1:8080/1.0/kb/accounts/<ACCOUNT_ID>/paymentMethods/refresh"
+```

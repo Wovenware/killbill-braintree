@@ -561,9 +561,8 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 
 	private void syncPaymentMethods(final UUID kbAccountId, final List<? extends PaymentMethod> braintreePaymentMethods, final Map<String, BraintreePaymentMethodsRecord> existingPaymentMethodByBraintreeId, final CallContext context) throws PaymentApiException, SQLException {
 		for (final PaymentMethod paymentMethod : braintreePaymentMethods) {
-			final Map<String, Object> additionalDataMap = PluginProperties.toMap(ImmutableList.of(
-					new PluginProperty(BraintreePluginProperties.PROPERTY_BT_CUSTOMER_ID, paymentMethod.getCustomerId(), false)
-			));
+			final Map<String, Object> additionalDataMap = BraintreePluginProperties.toAdditionalDataMap(paymentMethod);
+
 			// We remove it here to build the list of local payment methods to delete
 			final BraintreePaymentMethodsRecord existingPaymentMethodRecord = existingPaymentMethodByBraintreeId.remove(paymentMethod.getToken());
 			if (existingPaymentMethodRecord == null) {
@@ -584,10 +583,10 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			} else {
 				logger.info("Updating existing local Braintree payment method {}", existingPaymentMethodRecord.getKbPaymentMethodId());
 				dao.updatePaymentMethod(UUID.fromString(existingPaymentMethodRecord.getKbPaymentMethodId()),
-						BraintreeDao.mapFromAdditionalDataString(existingPaymentMethodRecord.getAdditionalData()),
-						paymentMethod.getToken(),
-						clock.getUTCNow(),
-						context.getTenantId());
+										additionalDataMap,
+										paymentMethod.getToken(),
+										clock.getUTCNow(),
+										context.getTenantId());
 			}
 		}
 	}
