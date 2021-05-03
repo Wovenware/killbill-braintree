@@ -17,27 +17,40 @@
 package org.killbill.billing.plugin.braintree.core.resources;
 
 import com.braintreegateway.BraintreeGateway;
+import com.braintreegateway.Environment;
 import com.google.inject.Inject;
 import org.jooby.mvc.GET;
+import org.jooby.mvc.Local;
 import org.jooby.mvc.Path;
+import org.killbill.billing.plugin.braintree.core.BraintreeConfigProperties;
+import org.killbill.billing.plugin.braintree.core.BraintreeConfigPropertiesConfigurationHandler;
+import org.killbill.billing.tenant.api.Tenant;
+import org.killbill.billing.util.entity.Entity;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
-
-
+import java.util.Optional;
 
 @Singleton
 @Path("/clientToken")
 public class BraintreeTokenServlet {
 
-    private final BraintreeGateway gateway;
+    private final BraintreeConfigPropertiesConfigurationHandler braintreeConfigPropertiesConfigurationHandler;
 
     @Inject
-    public BraintreeTokenServlet(final BraintreeGateway gateway) {
-        this.gateway = gateway;
+    public BraintreeTokenServlet(final BraintreeConfigPropertiesConfigurationHandler braintreeConfigPropertiesConfigurationHandler) {
+        this.braintreeConfigPropertiesConfigurationHandler = braintreeConfigPropertiesConfigurationHandler;
     }
 
     @GET
-    public String getToken() {
-        return gateway.clientToken().generate();
+    public String getToken(@Local @Named("killbill_tenant") final Optional<Tenant> tenant) {
+        final BraintreeConfigProperties config = braintreeConfigPropertiesConfigurationHandler.getConfigurable(tenant.map(Entity::getId).orElse(null));
+        final BraintreeGateway braintreeGateway = new BraintreeGateway(
+                Environment.parseEnvironment(config.getBtEnvironment()),
+                config.getBtMerchantId(),
+                config.getBtPublicKey(),
+                config.getBtPrivateKey()
+        );
+        return braintreeGateway.clientToken().generate();
     }
 }

@@ -88,18 +88,10 @@ public class TestBase {
         setDefaultConfigurable();
         final BraintreeConfigProperties globalConfiguration = braintreeConfigPropertiesConfigurationHandler.getConfigurable(randomTenantId);
         final OSGIConfigPropertiesService configPropertiesService = Mockito.mock(OSGIConfigPropertiesService.class);
-        braintreeGateway = new BraintreeGateway(
-                Environment.parseEnvironment(globalConfiguration.getBtEnvironment()),
-                globalConfiguration.getBtMerchantId(),
-                globalConfiguration.getBtPublicKey(),
-                globalConfiguration.getBtPrivateKey()
-        );
-        braintreeClient = new BraintreeClientImpl(braintreeGateway);
         braintreePaymentPluginApi = new BraintreePaymentPluginApi(braintreeConfigPropertiesConfigurationHandler,
                                                             killbillApi,
                                                             configPropertiesService,
                                                             clock,
-                                                            braintreeClient,
                                                             dao);
 
         TestUtils.updateOSGIKillbillAPI(killbillApi, braintreePaymentPluginApi);
@@ -140,6 +132,14 @@ public class TestBase {
     @BeforeMethod(groups = "integration")
     public void setUpIntegration() throws Exception {
         setDefaultConfigurable();
+        final BraintreeConfigProperties globalConfiguration = braintreeConfigPropertiesConfigurationHandler.getConfigurable(null);
+        braintreeGateway = new BraintreeGateway(
+                Environment.parseEnvironment(globalConfiguration.getBtEnvironment()),
+                globalConfiguration.getBtMerchantId(),
+                globalConfiguration.getBtPublicKey(),
+                globalConfiguration.getBtPrivateKey()
+        );
+        braintreeClient = new BraintreeClientImpl(braintreeGateway);
     }
 
     @BeforeSuite(groups = {"slow", "integration"})

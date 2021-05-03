@@ -57,7 +57,7 @@ public class BraintreeConfigProperties {
 	
 	public BraintreeConfigProperties(final Properties properties, final String region) {
 		this.region = region;
-		this.btEnvironment = properties.getProperty(PROPERTY_PREFIX + "btEnvironment");
+		this.btEnvironment = properties.getProperty(PROPERTY_PREFIX + "btEnvironment", "sandbox");
 		this.btMerchantId = properties.getProperty(PROPERTY_PREFIX + "btMerchantId");
 		this.btPublicKey = properties.getProperty(PROPERTY_PREFIX + "btPublicKey");
 		this.btPrivateKey = properties.getProperty(PROPERTY_PREFIX + "btPrivateKey");

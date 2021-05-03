@@ -34,10 +34,11 @@ public class BraintreeClientImpl implements BraintreeClient {
     }
 
     @Override
-    public Result<Transaction> saleTransaction(BigDecimal amount, @Nullable String braintreeCustomerId, String braintreePaymentMethodNonce, boolean submitForSettlement) throws BraintreeException {
+    public Result<Transaction> saleTransaction(String orderId, BigDecimal amount, @Nullable String braintreeCustomerId, String braintreePaymentMethodNonce, boolean submitForSettlement) throws BraintreeException {
         Result<Transaction> result;
         try {
             TransactionRequest request = new TransactionRequest()
+                    .orderId(orderId)
                     .amount(amount)
                     .paymentMethodNonce(braintreePaymentMethodNonce)
                     .options()
