@@ -21,16 +21,12 @@ import java.util.Hashtable;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 
-import com.braintreegateway.BraintreeGateway;
-import com.braintreegateway.Environment;
 import org.killbill.billing.osgi.api.Healthcheck;
 import org.killbill.billing.osgi.api.OSGIPluginProperties;
 import org.killbill.billing.osgi.libs.killbill.KillbillActivatorBase;
 import org.killbill.billing.payment.plugin.api.PaymentPluginApi;
 import org.killbill.billing.plugin.api.notification.PluginConfigurationEventHandler;
 import org.killbill.billing.plugin.braintree.api.BraintreePaymentPluginApi;
-import org.killbill.billing.plugin.braintree.client.BraintreeClient;
-import org.killbill.billing.plugin.braintree.client.BraintreeClientImpl;
 import org.killbill.billing.plugin.braintree.core.resources.BraintreeHealthcheckServlet;
 import org.killbill.billing.plugin.braintree.core.resources.BraintreeTokenServlet;
 import org.killbill.billing.plugin.braintree.dao.BraintreeDao;
@@ -62,16 +58,9 @@ public class BraintreeActivator extends KillbillActivatorBase {
 				.createConfigurable(configProperties.getProperties());
 		braintreeConfigurationHandler.setDefaultConfigurable(globalConfiguration);
 
-		final BraintreeGateway braintreeGateway = new BraintreeGateway(
-				Environment.parseEnvironment(globalConfiguration.getBtEnvironment()),
-				globalConfiguration.getBtMerchantId(),
-				globalConfiguration.getBtPublicKey(),
-				globalConfiguration.getBtPrivateKey()
-		);
-		final BraintreeClient braintreeClient = new BraintreeClientImpl(braintreeGateway);
 		final BraintreeDao braintreeDao = new BraintreeDao(dataSource.getDataSource());
 		final PaymentPluginApi paymentPluginApi = new BraintreePaymentPluginApi(braintreeConfigurationHandler,
-				killbillAPI, configProperties, clock.getClock(), braintreeClient, braintreeDao);
+				killbillAPI, configProperties, clock.getClock(), braintreeDao);
 		registerPaymentPluginApi(context, paymentPluginApi);
 
 		// Expose a healthcheck, so other plugins can check on the plugin status
@@ -82,7 +71,7 @@ public class BraintreeActivator extends KillbillActivatorBase {
 		final PluginApp pluginApp = new PluginAppBuilder(PLUGIN_NAME, killbillAPI, dataSource, super.clock, configProperties)
 						.withRouteClass(BraintreeTokenServlet.class)
 						.withRouteClass(BraintreeHealthcheckServlet.class).withService(healthcheck)
-						.withService(braintreeGateway)
+						.withService(braintreeConfigurationHandler)
 						.build();
 		final HttpServlet httpServlet = PluginApp.createServlet(pluginApp);
 		registerServlet(context, httpServlet);

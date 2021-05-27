@@ -50,7 +50,8 @@ import org.testng.annotations.BeforeSuite;
 
 public class TestBase {
 
-    private static final String PROPERTIES_FILE_NAME = "braintree.properties";
+    // Don't use braintree.properties (conflicts with a resource from upstream)
+    private static final String PROPERTIES_FILE_NAME = "killbill.properties";
 
     public static final Currency DEFAULT_CURRENCY = Currency.USD;
     public static final String DEFAULT_COUNTRY = "US";
@@ -88,18 +89,10 @@ public class TestBase {
         setDefaultConfigurable();
         final BraintreeConfigProperties globalConfiguration = braintreeConfigPropertiesConfigurationHandler.getConfigurable(randomTenantId);
         final OSGIConfigPropertiesService configPropertiesService = Mockito.mock(OSGIConfigPropertiesService.class);
-        braintreeGateway = new BraintreeGateway(
-                Environment.parseEnvironment(globalConfiguration.getBtEnvironment()),
-                globalConfiguration.getBtMerchantId(),
-                globalConfiguration.getBtPublicKey(),
-                globalConfiguration.getBtPrivateKey()
-        );
-        braintreeClient = new BraintreeClientImpl(braintreeGateway);
         braintreePaymentPluginApi = new BraintreePaymentPluginApi(braintreeConfigPropertiesConfigurationHandler,
                                                             killbillApi,
                                                             configPropertiesService,
                                                             clock,
-                                                            braintreeClient,
                                                             dao);
 
         TestUtils.updateOSGIKillbillAPI(killbillApi, braintreePaymentPluginApi);
@@ -140,6 +133,14 @@ public class TestBase {
     @BeforeMethod(groups = "integration")
     public void setUpIntegration() throws Exception {
         setDefaultConfigurable();
+        final BraintreeConfigProperties globalConfiguration = braintreeConfigPropertiesConfigurationHandler.getConfigurable(null);
+        braintreeGateway = new BraintreeGateway(
+                Environment.parseEnvironment(globalConfiguration.getBtEnvironment()),
+                globalConfiguration.getBtMerchantId(),
+                globalConfiguration.getBtPublicKey(),
+                globalConfiguration.getBtPrivateKey()
+        );
+        braintreeClient = new BraintreeClientImpl(braintreeGateway);
     }
 
     @BeforeSuite(groups = {"slow", "integration"})
@@ -153,7 +154,12 @@ public class TestBase {
     }
 
     private void setDefaultConfigurable() throws  Exception{
-        final Properties properties = TestUtils.loadProperties(PROPERTIES_FILE_NAME);
+        Properties properties = new Properties();
+        try {
+            properties = TestUtils.loadProperties(PROPERTIES_FILE_NAME);
+        } catch (final RuntimeException ignored) {
+            // Will use environment variables instead
+        }
         final BraintreeConfigProperties braintreeConfigProperties = new BraintreeConfigProperties(properties, "");
         braintreeConfigPropertiesConfigurationHandler.setDefaultConfigurable(braintreeConfigProperties);
     }

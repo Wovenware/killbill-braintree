@@ -284,7 +284,7 @@ public class TestBraintreePaymentPluginApi extends TestBase {
         assertNotNull(paymentTransactionInfoPlugin.getEffectiveDate());
 
         assertNull(paymentTransactionInfoPlugin.getGatewayErrorCode());
-        assertEquals(paymentTransactionInfoPlugin.getStatus(), expectedPaymentPluginStatus);
+        assertEquals(paymentTransactionInfoPlugin.getStatus(), expectedPaymentPluginStatus, "Unexpected status " + paymentTransactionInfoPlugin.getStatus() + ": " + paymentTransactionInfoPlugin);
 
         assertNull(paymentTransactionInfoPlugin.getGatewayError());
     }

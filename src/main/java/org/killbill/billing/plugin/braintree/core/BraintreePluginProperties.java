@@ -16,8 +16,13 @@
 
 package org.killbill.billing.plugin.braintree.core;
 
+import com.braintreegateway.CreditCard;
+import com.braintreegateway.PayPalAccount;
+import com.braintreegateway.PaymentMethod;
 import com.braintreegateway.Result;
 import com.braintreegateway.Transaction;
+import com.braintreegateway.UsBankAccount;
+
 import org.killbill.billing.plugin.braintree.client.BraintreeClient;
 
 import java.util.HashMap;
@@ -95,4 +100,101 @@ public abstract class BraintreePluginProperties {
         return additionalDataMap;
     }
 
+    public static Map<String, Object> toAdditionalDataMap(final PaymentMethod paymentMethod) {
+        final Map<String, Object> additionalDataMap = new HashMap<String, Object>();
+
+        additionalDataMap.put("token", paymentMethod.getToken());
+        additionalDataMap.put("is_default", paymentMethod.isDefault());
+        additionalDataMap.put("image_url", paymentMethod.getImageUrl());
+        additionalDataMap.put(PROPERTY_BT_CUSTOMER_ID, paymentMethod.getCustomerId());
+
+        if (paymentMethod instanceof CreditCard) {
+            final CreditCard cc = (CreditCard) paymentMethod;
+            if (cc.getBillingAddress() != null) {
+                additionalDataMap.put("billing_address_country_name", cc.getBillingAddress().getCountryName());
+            }
+            additionalDataMap.put("bin", cc.getBin());
+            additionalDataMap.put("cardholder_name", cc.getCardholderName());
+            additionalDataMap.put("cart_type", cc.getCardType());
+            if (cc.getCreatedAt() != null) {
+                additionalDataMap.put("created_at", cc.getCreatedAt().toInstant().toString());
+            }
+            additionalDataMap.put("customer_id", cc.getCustomerId());
+            additionalDataMap.put("customer_location", cc.getCustomerLocation());
+            additionalDataMap.put("expiration_month", cc.getExpirationMonth());
+            additionalDataMap.put("expiration_year", cc.getExpirationYear());
+            additionalDataMap.put("is_default", cc.isDefault());
+            additionalDataMap.put("is_venmo_sdk", cc.isVenmoSdk());
+            additionalDataMap.put("is_expired", cc.isExpired());
+            additionalDataMap.put("is_network_tokenized", cc.isNetworkTokenized());
+            additionalDataMap.put("image_url", cc.getImageUrl());
+            additionalDataMap.put("last4", cc.getLast4());
+            if (cc.getCommercial() != null) {
+                additionalDataMap.put("commercial", cc.getCommercial().toString());
+            }
+            if (cc.getDebit() != null) {
+                additionalDataMap.put("debit", cc.getDebit().toString());
+            }
+            if (cc.getDurbinRegulated() != null) {
+                additionalDataMap.put("durbin_regulated", cc.getDurbinRegulated().toString());
+            }
+            if (cc.getHealthcare() != null) {
+                additionalDataMap.put("healthcare", cc.getHealthcare().toString());
+            }
+            if (cc.getPayroll() != null) {
+                additionalDataMap.put("payroll", cc.getPayroll().toString());
+            }
+            if (cc.getPrepaid() != null) {
+                additionalDataMap.put("prepaid", cc.getPrepaid().toString());
+            }
+            additionalDataMap.put("product_id", cc.getProductId());
+            additionalDataMap.put("country_of_issuance", cc.getCountryOfIssuance());
+            additionalDataMap.put("issuing_bank", cc.getIssuingBank());
+            additionalDataMap.put("unique_number_identifier", cc.getUniqueNumberIdentifier());
+            additionalDataMap.put("token", cc.getToken());
+            if (cc.getUpdatedAt() != null) {
+                additionalDataMap.put("updated_at", cc.getUpdatedAt().toInstant().toString());
+            }
+            if (cc.getVerification() != null) {
+                additionalDataMap.put("verification_status", cc.getVerification().getStatus().toString());
+            }
+            additionalDataMap.put("account_type", cc.getAccountType());
+        } else if (paymentMethod instanceof PayPalAccount) {
+            final PayPalAccount paypal = (PayPalAccount) paymentMethod;
+            // GDPR / PII
+            // additionalDataMap.put("email", paypal.getEmail());
+            additionalDataMap.put("token", paypal.getToken());
+            additionalDataMap.put("billing_agreement_id", paypal.getBillingAgreementId());
+            additionalDataMap.put("is_default", paypal.isDefault());
+            additionalDataMap.put("image_url", paypal.getImageUrl());
+            additionalDataMap.put("payer_id", paypal.getPayerId());
+            additionalDataMap.put("customer_id", paypal.getCustomerId());
+            if (paypal.getCreatedAt() != null) {
+                additionalDataMap.put("created_at", paypal.getCreatedAt().toInstant().toString());
+            }
+            if (paypal.getUpdatedAt() != null) {
+                additionalDataMap.put("updated_at", paypal.getUpdatedAt().toInstant().toString());
+            }
+            if (paypal.getRevokedAt() != null) {
+                additionalDataMap.put("revoked_at", paypal.getRevokedAt().toInstant().toString());
+            }
+        } else if (paymentMethod instanceof UsBankAccount) {
+            final UsBankAccount acct = (UsBankAccount) paymentMethod;
+            additionalDataMap.put("routing_number", acct.getRoutingNumber());
+            additionalDataMap.put("last4", acct.getLast4());
+            additionalDataMap.put("account_type", acct.getAccountType());
+            additionalDataMap.put("account_holder_name", acct.getAccountHolderName());
+            additionalDataMap.put("token", acct.getToken());
+            additionalDataMap.put("image_url", acct.getImageUrl());
+            additionalDataMap.put("bank_name", acct.getBankName());
+            additionalDataMap.put("customer_id", acct.getCustomerId());
+            additionalDataMap.put("is_default", acct.isDefault());
+            if (acct.getAchMandate() != null) {
+                additionalDataMap.put("ach_mandate_accepted_at", acct.getAchMandate().getAcceptedAt().toString());
+            }
+            additionalDataMap.put("is_verified", acct.isVerified());
+        }
+
+        return additionalDataMap;
+    }
 }

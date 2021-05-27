@@ -28,7 +28,7 @@ import java.util.List;
 
 public interface BraintreeClient {
 
-    Result<Transaction> saleTransaction(BigDecimal amount, @Nullable String braintreeCustomerId, String braintreePaymentMethodNonce, boolean submitForSettlement) throws BraintreeException;
+    Result<Transaction> saleTransaction(String orderId, BigDecimal amount, @Nullable String braintreeCustomerId, String braintreePaymentMethodNonce, boolean submitForSettlement) throws BraintreeException;
 
     Result<Transaction> submitTransactionForSettlement(String braintreeTransactionId, BigDecimal amount) throws BraintreeException;
 

@@ -20,6 +20,8 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.*;
 
+import com.braintreegateway.BraintreeGateway;
+import com.braintreegateway.Environment;
 import com.braintreegateway.PaymentMethod;
 import com.braintreegateway.Result;
 import com.braintreegateway.Transaction;
@@ -42,7 +44,9 @@ import org.killbill.billing.plugin.api.PluginProperties;
 import org.killbill.billing.plugin.api.core.PluginCustomField;
 import org.killbill.billing.plugin.api.payment.PluginPaymentPluginApi;
 import org.killbill.billing.plugin.braintree.client.BraintreeClient;
+import org.killbill.billing.plugin.braintree.client.BraintreeClientImpl;
 import org.killbill.billing.plugin.braintree.core.BraintreeActivator;
+import org.killbill.billing.plugin.braintree.core.BraintreeConfigProperties;
 import org.killbill.billing.plugin.braintree.core.BraintreeConfigPropertiesConfigurationHandler;
 import org.killbill.billing.plugin.braintree.core.BraintreePluginProperties;
 import org.killbill.billing.plugin.braintree.core.resources.ExpiredPaymentPolicy;
@@ -64,7 +68,6 @@ import javax.annotation.Nullable;
 public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeResponsesRecord, BraintreeResponses, BraintreePaymentMethodsRecord, BraintreePaymentMethods> {
 
 	private static final Logger logger = LoggerFactory.getLogger(BraintreePaymentPluginApi.class);
-	private final BraintreeClient braintreeClient;
 	private final BraintreeDao dao;
 	private final BraintreeConfigPropertiesConfigurationHandler braintreeConfigPropertiesConfigurationHandler;
 
@@ -72,10 +75,8 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 									 final OSGIKillbillAPI killbillAPI,
 									 final OSGIConfigPropertiesService configProperties,
 									 final Clock clock,
-									 final BraintreeClient braintreeClient,
 									 final BraintreeDao dao) {
 		super(killbillAPI, configProperties, clock, dao);
-		this.braintreeClient = braintreeClient;
 		this.braintreeConfigPropertiesConfigurationHandler = braintreeConfigPropertiesConfigurationHandler;
 		this.dao = dao;
 	}
@@ -95,7 +96,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 				new TransactionExecutor<Result<Transaction>>() {
 					@Override
 					public Result<Transaction> execute(final Account account, final BraintreePaymentMethodsRecord paymentMethodsRecord, final BraintreeResponsesRecord previousResponse) throws BraintreeException {
-						return braintreeClient.submitTransactionForSettlement(previousResponse.getBraintreeId(), amount);
+						return buildBraintreeClient(context).submitTransactionForSettlement(previousResponse.getBraintreeId(), amount);
 					}
 				},
 				kbAccountId,
@@ -137,7 +138,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 				new TransactionExecutor<Result<Transaction>>() {
 					@Override
 					public Result<Transaction> execute(final Account account, final BraintreePaymentMethodsRecord paymentMethodsRecord, final BraintreeResponsesRecord previousResponse) throws BraintreeException {
-						return braintreeClient.voidTransaction(previousResponse.getBraintreeId());
+						return buildBraintreeClient(context).voidTransaction(previousResponse.getBraintreeId());
 					}
 				},
 				kbAccountId,
@@ -178,7 +179,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 				new TransactionExecutor<Result<Transaction>>() {
 					@Override
 					public Result<Transaction> execute(final Account account, final BraintreePaymentMethodsRecord paymentMethodsRecord, final BraintreeResponsesRecord previousResponse) throws BraintreeException {
-						return braintreeClient.refundTransaction(previousResponse.getBraintreeId(), amount);
+						return buildBraintreeClient(context).refundTransaction(previousResponse.getBraintreeId(), amount);
 					}
 				},
 				kbAccountId,
@@ -221,6 +222,8 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			return super.getPaymentInfo(kbAccountId, kbPaymentId, properties, context);
 		}
 
+		final BraintreeClient braintreeClient = buildBraintreeClient(context);
+
 		// Refresh, if needed
 		boolean wasRefreshed = false;
 		for (final PaymentTransactionInfoPlugin transaction : transactions) {
@@ -256,6 +259,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 	public void addPaymentMethod(UUID kbAccountId, UUID kbPaymentMethodId, PaymentMethodPlugin paymentMethodProps,
 			boolean setDefault, Iterable<PluginProperty> properties, CallContext context)
 			throws PaymentPluginApiException {
+		final BraintreeClient braintreeClient = buildBraintreeClient(context);
 		String braintreeCustomerId = PluginProperties.getValue(BraintreePluginProperties.PROPERTY_BT_CUSTOMER_ID,
 				BraintreePluginProperties.PROPERTY_FALLBACK_VALUE, properties);
 		if(!braintreeCustomerId.equals(BraintreePluginProperties.PROPERTY_FALLBACK_VALUE)){
@@ -311,7 +315,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 		// Delete in Braintree
 		String braintreePaymentMethodToken = braintreePaymentMethodsRecord.getBraintreeId();
 		try {
-			Result<? extends PaymentMethod> result = braintreeClient.deletePaymentMethod(braintreePaymentMethodToken);
+			Result<? extends PaymentMethod> result = buildBraintreeClient(context).deletePaymentMethod(braintreePaymentMethodToken);
 			if(!result.isSuccess()) throw new BraintreeException(result.getMessage());
 		} catch (final BraintreeException e) {
 			throw new PaymentPluginApiException("Could not delete payment method in Braintree", e);
@@ -364,7 +368,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 
 		// Sync Braintree payment methods (source of truth)
 		try {
-			final List<? extends PaymentMethod> braintreePaymentMethods = braintreeClient.getPaymentMethods(braintreeCustomerId);
+			final List<? extends PaymentMethod> braintreePaymentMethods = buildBraintreeClient(context).getPaymentMethods(braintreeCustomerId);
 			syncPaymentMethods(kbAccountId, braintreePaymentMethods, existingPaymentMethodByBraintreeId, context);
 		} catch (final BraintreeException e) {
 			throw new PaymentPluginApiException("Error connecting to Braintree", e);
@@ -457,6 +461,7 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 				new TransactionExecutor<Result<Transaction>>() {
 					@Override
 					public Result<Transaction> execute(final Account account, final BraintreePaymentMethodsRecord paymentMethodsRecord) {
+						final BraintreeClient braintreeClient = buildBraintreeClient(context);
 						String braintreePaymentMethodNonce = braintreeClient.createNonceFromPaymentMethodToken(paymentMethodsRecord.getBraintreeId());
 						if(transactionType == TransactionType.CREDIT){
 							return braintreeClient.creditTransaction(amount,
@@ -465,7 +470,10 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 						}
 						else{
 							boolean submitForSettlement = transactionType != TransactionType.AUTHORIZE;
-							return braintreeClient.saleTransaction(amount,
+							// Make sure to pass the order id to avoid confusing the Braintree duplicate checker
+							return braintreeClient.saleTransaction(
+									kbTransactionId.toString(),
+									amount,
 									getCustomerIdCustomField(kbAccountId, context),
 									braintreePaymentMethodNonce,
 									submitForSettlement);
@@ -553,9 +561,8 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 
 	private void syncPaymentMethods(final UUID kbAccountId, final List<? extends PaymentMethod> braintreePaymentMethods, final Map<String, BraintreePaymentMethodsRecord> existingPaymentMethodByBraintreeId, final CallContext context) throws PaymentApiException, SQLException {
 		for (final PaymentMethod paymentMethod : braintreePaymentMethods) {
-			final Map<String, Object> additionalDataMap = PluginProperties.toMap(ImmutableList.of(
-					new PluginProperty(BraintreePluginProperties.PROPERTY_BT_CUSTOMER_ID, paymentMethod.getCustomerId(), false)
-			));
+			final Map<String, Object> additionalDataMap = BraintreePluginProperties.toAdditionalDataMap(paymentMethod);
+
 			// We remove it here to build the list of local payment methods to delete
 			final BraintreePaymentMethodsRecord existingPaymentMethodRecord = existingPaymentMethodByBraintreeId.remove(paymentMethod.getToken());
 			if (existingPaymentMethodRecord == null) {
@@ -576,10 +583,10 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			} else {
 				logger.info("Updating existing local Braintree payment method {}", existingPaymentMethodRecord.getKbPaymentMethodId());
 				dao.updatePaymentMethod(UUID.fromString(existingPaymentMethodRecord.getKbPaymentMethodId()),
-						BraintreeDao.mapFromAdditionalDataString(existingPaymentMethodRecord.getAdditionalData()),
-						paymentMethod.getToken(),
-						clock.getUTCNow(),
-						context.getTenantId());
+										additionalDataMap,
+										paymentMethod.getToken(),
+										clock.getUTCNow(),
+										context.getTenantId());
 			}
 		}
 	}
@@ -635,5 +642,16 @@ public class BraintreePaymentPluginApi extends PluginPaymentPluginApi<BraintreeR
 			record.setKbPaymentMethodId(kbPaymentMethodId.toString());
 		}
 		return record;
+	}
+
+	private BraintreeClient buildBraintreeClient(final TenantContext tenantContext) {
+		final BraintreeConfigProperties config = braintreeConfigPropertiesConfigurationHandler.getConfigurable(tenantContext.getTenantId());
+		final BraintreeGateway braintreeGateway = new BraintreeGateway(
+				Environment.parseEnvironment(config.getBtEnvironment()),
+				config.getBtMerchantId(),
+				config.getBtPublicKey(),
+				config.getBtPrivateKey()
+		);
+		return new BraintreeClientImpl(braintreeGateway);
 	}
 }
