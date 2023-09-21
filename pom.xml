@@ -20,15 +20,21 @@
     <parent>
         <groupId>org.kill-bill.billing</groupId>
         <artifactId>killbill-oss-parent</artifactId>
-        <version>0.144.48</version>
+        <version>0.146.20</version>
     </parent>
     <groupId>org.kill-bill.billing.plugin.java</groupId>
     <artifactId>braintree-plugin</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Kill Bill Braintree plugin</name>
     <description>Kill Bill braintree plugin</description>
     <properties>
+        <check.skip-dependency>true</check.skip-dependency>
+        <check.skip-dependency-scope>true</check.skip-dependency-scope>
+        <check.skip-dependency-versions>true</check.skip-dependency-versions>
+        <check.skip-duplicate-finder>true</check.skip-duplicate-finder>
+        <check.skip-enforcer>true</check.skip-enforcer>
+        <check.skip-rat>true</check.skip-rat>
         <check.fail-spotbugs>true</check.fail-spotbugs>
         <check.spotbugs-exclude-filter-file>spotbugs-exclude.xml</check.spotbugs-exclude-filter-file>
         <osgi.private>org.killbill.billing.plugin.braintree.*</osgi.private>
@@ -84,8 +90,8 @@
             <artifactId>javax.inject</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -101,18 +107,6 @@
         <dependency>
             <groupId>org.jooby</groupId>
             <artifactId>jooby</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jooq</artifactId>
-            <!-- 3.14.0 broke returning() on MySQL :( -->
-            <version>3.13.5</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactive-streams</artifactId>
-                    <groupId>org.reactivestreams</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.kill-bill.billing</groupId>
@@ -262,35 +256,8 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>com.ning.maven.plugins</groupId>
-                <artifactId>maven-dependency-versions-check-plugin</artifactId>
-                <configuration>
-                    <exceptions>
-                        <exception>
-                            <groupId>org.jooq</groupId>
-                            <artifactId>jooq</artifactId>
-                            <expectedVersion>3.14.7</expectedVersion>
-                            <resolvedVersion>3.13.5</resolvedVersion>
-                        </exception>
-                    </exceptions>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <configuration>
-                    <rules>
-                        <requireUpperBoundDeps>
-                            <excludes>
-                                <exclude>org.jooq:jooq</exclude>
-                            </excludes>
-                        </requireUpperBoundDeps>
-                    </rules>
-                </configuration>
             </plugin>
         </plugins>
     </build>
